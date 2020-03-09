@@ -2,7 +2,15 @@ const axios = require("axios");
 const fs = require("fs");
 const FormData = require("form-data");
 
+const url = "https://u0qnrq5krc-u0ahyajkju-ipfs.us0-aws.kaleido.io/api/v0/";
 
+const KALEIDO_AUTH_USERNAME = "u0bvovag47";
+const KALEIDO_AUTH_PASSWORD = "hhj93KUEzi1-AGpPrD7qYqPS1G1QexJGhunuc_2kUXI";
+
+const dealerNode =
+  "https://u0qnrq5krc-u0cprsahff-connect.us0-aws.kaleido.io/instances/0x3347d6a26c6d095b432c47160bc8360d5cbf0f57";
+const DEALERCREDENTIALS =
+  "u0s18ui894:ozL0_zzdT2Ugw5i9jkv-PnES0L-lPTgVlWMaFmDyEyM";
 
 const payload = {
   car: "test",

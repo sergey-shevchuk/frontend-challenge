@@ -1,11 +1,13 @@
-import React, { useState } from "react";
-import logo from "./logo.svg";
-import styled from "@emotion/styled/macro";
-import LabeledInput from "./LabeledInput";
-import "./App.css";
-import Button from "./Button";
-import camryImage from "./images/camry.png";
-import homeImage from "./images/home.png";
+import React, { useState } from 'react';
+import PropTypes from 'prop-types';
+import logo from './logo.svg';
+import styled from '@emotion/styled/macro';
+import LabeledInput from './LabeledInput';
+import './App.css';
+import Button from './Button';
+import axios from 'axios';
+import camryImage from './images/camry.png';
+import homeImage from './images/home.png';
 import {
   BrowserRouter as Router,
   Switch,
@@ -13,87 +15,112 @@ import {
   Link,
   useHistory,
   useParams
-} from "react-router-dom";
+} from 'react-router-dom';
 
-const data = {
-  "2C3HD46R4WH170": {
-    image: camryImage,
-    model: "2020 Toyota Camry",
-    milage: 32000,
-    serviceHistory: [
-      {
-        title: "5,000 Miles or 6 Months",
-        maintenancePerformed: [
-          "Check installation of driver’s floor mat",
-          "Inspect and adjust all fluid levels",
-          "Inspect wiper blades",
-          "Rotate tires",
-          "Visually inspect brake linings/drums and brake pads"
-        ]
-      },
-      {
-        title: "10,000 Miles or 12 Months",
-        maintenancePerformed: [
-          "Check installation of driver’s floor mat",
-          "Inspect and adjust all fluid levels",
-          "Inspect wiper blades",
-          "Replace cabin air filter",
-          "Replace engine oil and oil filter",
-          "Rotate tires",
-          "Visually inspect brake linings/drums and brake pads/discs"
-        ]
-      },
-      {
-        title: "15,000 Miles or 18 Months",
-        maintenancePerformed: [
-          "Check installation of driver’s floor mat",
-          "Inspect and adjust all fluid levels",
-          "Inspect wiper blades",
-          "Rotate tires",
-          "Visually inspect brake linings/drums and brake pads/discs",
-          "Inspect The Following Ball Joint and Dust Covers, Brake Lines and Hoses, Drive Shaft Boots, Engine Coolant, Exhaust Pipes and Mountings, Radiator and Condenser, Steering Gear, Steering Linkage and Boots"
-        ]
-      },
-      {
-        title: "20,000 Miles or 24 Months",
-        maintenancePerformed: [
-          "Check installation of driver’s floor mat",
-          "Inspect and adjust all fluid levels",
-          "Inspect wiper blades",
-          "Replace cabin air filter",
-          "Replace engine oil and oil filter",
-          "Rotate tires",
-          "Visually inspect brake linings/drums and brake pads/discs"
-        ]
-      },
-      {
-        title: "25,000 Miles or 30 Months",
-        maintenancePerformed: [
-          "Check installation of driver’s floor mat",
-          "Inspect and adjust all fluid levels",
-          "Inspect wiper blades",
-          "Rotate tires",
-          "Visually inspect brake linings/drums and brake pads/discs"
-        ]
-      },
-      {
-        title: "30,000 Miles or 36 Months",
-        maintenancePerformed: [
-          "Check installation of driver’s floor mat",
-          "Inspect and adjust all fluid levels",
-          "Inspect wiper blades",
-          "Replace cabin air filter",
-          "Replace engine oil and oil filter",
-          "Rotate tires",
-          "Replace engine air filter",
-          "Inspect The Following: Automatic Transmission for Signs of Leakage, Ball Joints and Dust Covers, Brake Lines and Hoses, Brake Linings/Drums and Brake Pads/Discs,"
-        ]
-      }
+import { makeStyles } from '@material-ui/core/styles';
+import ButtonM from '@material-ui/core/Button';
+import Avatar from '@material-ui/core/Avatar';
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemAvatar from '@material-ui/core/ListItemAvatar';
+import ListItemText from '@material-ui/core/ListItemText';
+import DialogTitle from '@material-ui/core/DialogTitle';
+import Dialog from '@material-ui/core/Dialog';
+import DialogActions from '@material-ui/core/DialogActions';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogContentText from '@material-ui/core/DialogContentText';
+import Typography from '@material-ui/core/Typography';
+import { blue } from '@material-ui/core/colors';
+import CircularProgress from '@material-ui/core/CircularProgress';
+
+const maintenanceMap = {
+  '6021cc5e3e7d69081762095f6cfac0eb': {
+    title: '5,000 Miles or 6 Months',
+    maintenancePerformed: [
+      'Check installation of driver’s floor mat',
+      'Inspect and adjust all fluid levels',
+      'Inspect wiper blades',
+      'Rotate tires',
+      'Visually inspect brake linings/drums and brake pads'
+    ]
+  },
+  'd88810cef5584d1b9c7879b3e4b4c5a2': {
+    title: '10,000 Miles or 12 Months',
+    maintenancePerformed: [
+      'Check installation of driver’s floor mat',
+      'Inspect and adjust all fluid levels',
+      'Inspect wiper blades',
+      'Replace cabin air filter',
+      'Replace engine oil and oil filter',
+      'Rotate tires',
+      'Visually inspect brake linings/drums and brake pads/discs'
+    ]
+  },
+  '5173841c64bdd80d16df6e933d69b2bd': {
+    title: '15,000 Miles or 18 Months',
+    maintenancePerformed: [
+      'Check installation of driver’s floor mat',
+      'Inspect and adjust all fluid levels',
+      'Inspect wiper blades',
+      'Rotate tires',
+      'Visually inspect brake linings/drums and brake pads/discs',
+      'Inspect The Following Ball Joint and Dust Covers, Brake Lines and Hoses, Drive Shaft Boots, Engine Coolant, Exhaust Pipes and Mountings, Radiator and Condenser, Steering Gear, Steering Linkage and Boots'
+    ]
+  },
+  'f5e8b351fb731318df2d6b18208dcbcf': {
+    title: '20,000 Miles or 24 Months',
+    maintenancePerformed: [
+      'Check installation of driver’s floor mat',
+      'Inspect and adjust all fluid levels',
+      'Inspect wiper blades',
+      'Replace cabin air filter',
+      'Replace engine oil and oil filter',
+      'Rotate tires',
+      'Visually inspect brake linings/drums and brake pads/discs'
+    ]
+  },
+  '96ead03102ed5a9c105ea9dbeb60bc6c': {
+    title: '25,000 Miles or 30 Months',
+    maintenancePerformed: [
+      'Check installation of driver’s floor mat',
+      'Inspect and adjust all fluid levels',
+      'Inspect wiper blades',
+      'Rotate tires',
+      'Visually inspect brake linings/drums and brake pads/discs'
+    ]
+  },
+  'b9195e914e4b315e8f5a6315163269c1': {
+    title: '30,000 Miles or 36 Months',
+    maintenancePerformed: [
+      'Check installation of driver’s floor mat',
+      'Inspect and adjust all fluid levels',
+      'Inspect wiper blades',
+      'Replace cabin air filter',
+      'Replace engine oil and oil filter',
+      'Rotate tires',
+      'Replace engine air filter',
+      'Inspect The Following: Automatic Transmission for Signs of Leakage, Ball Joints and Dust Covers, Brake Lines and Hoses, Brake Linings/Drums and Brake Pads/Discs,'
     ]
   }
 };
 
-const AppContainer = styled("section")`
+const data = {
+  '2C3HD46R4WH170': {
+    image: camryImage,
+    model: '2020 Toyota Camry',
+    milage: 32000,
+    serviceHistory: [
+      '6021cc5e3e7d69081762095f6cfac0eb',
+      'd88810cef5584d1b9c7879b3e4b4c5a2',
+      '5173841c64bdd80d16df6e933d69b2bd',
+      'f5e8b351fb731318df2d6b18208dcbcf',
+      '96ead03102ed5a9c105ea9dbeb60bc6c',
+      'b9195e914e4b315e8f5a6315163269c1'
+    ]
+  }
+};
+
+const AppContainer = styled('section')`
   display: flex;
 `;
 
@@ -121,7 +148,7 @@ function DealerSearch() {
       <SearchControls>
         <h3>Dealer Search</h3>
         <LabeledInput
-          placeholder={"Input VIN here"}
+          placeholder={'Input VIN here'}
           value={vin}
           onChange={handleInputChange}
         />
@@ -131,7 +158,7 @@ function DealerSearch() {
   );
 }
 
-const HeyPrettyCommon = styled.div`
+const ServiceCommon = styled.div`
   display: flex;
   position: relative;
   width: 80%;
@@ -140,19 +167,19 @@ const HeyPrettyCommon = styled.div`
   margin: 10px;
 `;
 
-const HeyPretty = styled(HeyPrettyCommon)`
+const Service = styled(ServiceCommon)`
   border: solid 1.3px #0093fe;
   background-color: white;
   box-shadow: rgba(0, 0, 0, 0.16) 0px 3px 6px;
 `;
 
-const HeyPrettyCompleted = styled(HeyPretty)`
+const ServiceCompleted = styled(Service)`
   border: solid 1.3px #37c392;
   background-color: #effaf7;
   box-shadow: inset rgba(0, 0, 0, 0.16) 0px 0px 1px 0px;
 `;
 
-const HeyPrettyLocked = styled(HeyPrettyCommon)`
+const ServiceLocked = styled(ServiceCommon)`
   background-color: white;
 `;
 
@@ -243,7 +270,7 @@ function CheckMark() {
 
 function Dot({ type, index }) {
   switch (type) {
-    case "completed":
+    case 'completed':
       return (
         <DotCompleted>
           <CheckMark />
@@ -300,6 +327,30 @@ const Milage = styled.p``;
 function Dealer() {
   let { vin } = useParams();
 
+  const [open, setOpen] = React.useState(false);
+  const [currentMaintenance, setCurrentMaintenance] = React.useState();
+
+  const handleClickOpen = () => {
+    setOpen(true);
+  };
+
+  const fetchMaintenanceHistory = async () => {
+    const data = await axios.get(
+      `http://localhost:4000/api/maintenance-history/${vin}`
+    );
+    console.log(data);
+    return data;
+  };
+
+  const onServiceConfirm = () => {
+    fetchMaintenanceHistory();
+    handleClose();
+  };
+
+  const handleClose = value => {
+    setOpen(false);
+  };
+
   // if (!vin) {
   // }
 
@@ -318,7 +369,7 @@ function Dealer() {
         {carDetails.serviceHistory.map((entry, index) => {
           if (index === 0) {
             return (
-              <HeyPrettyCompleted>
+              <ServiceCompleted>
                 <DotCompleted></DotCompleted>
                 <InfoContainer>
                   <TextCompleted>{entry.title}</TextCompleted>
@@ -332,29 +383,36 @@ function Dealer() {
                 <li>{maintenance}</li>
               ))}
             </ul> */}
-              </HeyPrettyCompleted>
+              </ServiceCompleted>
             );
           } else if (index === 1) {
             return (
-              <HeyPretty>
+              <Service>
                 <DotStart>{index + 1}</DotStart>
                 <InfoContainer>
                   <Text>{entry.title}</Text>
                   <MoreInfo>More info</MoreInfo>
                 </InfoContainer>
                 <ActionContainer>
-                  <StartAction>Start</StartAction>
+                  <StartAction
+                    onClick={() => {
+                      setCurrentMaintenance(data[vin].serviceHistory[index]);
+                      handleClickOpen();
+                    }}
+                  >
+                    Start
+                  </StartAction>
                 </ActionContainer>
                 {/* <ul>
               {entry.maintenancePerformed.map(maintenance => (
                 <li>{maintenance}</li>
               ))}
             </ul> */}
-              </HeyPretty>
+              </Service>
             );
           }
           return (
-            <HeyPrettyLocked>
+            <ServiceLocked>
               <DotLocked>{index + 1}</DotLocked>
               <InfoContainer>
                 <TextLocked>{entry.title}</TextLocked>
@@ -368,10 +426,16 @@ function Dealer() {
               <li>{maintenance}</li>
             ))}
           </ul> */}
-            </HeyPrettyLocked>
+            </ServiceLocked>
           );
         })}
       </ServiceDetails>
+      <SimpleDialog
+        open={open}
+        onClose={handleClose}
+        currentMaintenance={currentMaintenance}
+        onServiceConfirm={onServiceConfirm}
+      />
     </>
   );
 }
@@ -411,10 +475,10 @@ const Tile = styled.div`
 function Home() {
   let history = useHistory();
   const onDealerTileClick = () => {
-    history.push("/dealer");
+    history.push('/dealer');
   };
   const onSearchTileClick = () => {
-    history.push("/search");
+    history.push('/search');
   };
   return (
     <HomeWrapper>
@@ -430,6 +494,80 @@ function Home() {
         </Tile>
       </TileWrapper>
     </HomeWrapper>
+  );
+}
+
+const emails = ['username@gmail.com', 'user02@gmail.com'];
+const useStyles = makeStyles({
+  avatar: {
+    backgroundColor: blue[100],
+    color: blue[600]
+  }
+});
+
+function SimpleDialog(props) {
+  const classes = useStyles();
+  const { onClose, currentMaintenance, onServiceConfirm, open } = props;
+  const [milage, setMilage] = useState();
+  const onMilageChange = LabeledInput.createInputHandler(setMilage);
+  const [isLoading, setLoading] = useState(false);
+
+  const confirmService = async () => {
+    // setLoading(true);
+
+    const response = await axios.post(
+      `http://localhost:4000/api/maintenance-history`,
+      {
+        milage,
+        serviceHash: 'test'
+      }
+    );
+    console.log(milage);
+    onServiceConfirm();
+  };
+
+  const handleClose = () => {
+    onClose();
+  };
+
+  const handleListItemClick = value => {
+    onClose(value);
+  };
+
+  return (
+    <Dialog
+      onClose={handleClose}
+      aria-labelledby="simple-dialog-title"
+      open={open}
+    >
+      <DialogTitle id="simple-dialog-title">Perform maintenance</DialogTitle>
+      <DialogContent>
+        <DialogContentText>
+          {currentMaintenance && currentMaintenance.title}
+          <ul>
+            {currentMaintenance &&
+              currentMaintenance.maintenancePerformed.map(maintenance => (
+                <li>{maintenance}</li>
+              ))}
+          </ul>
+        </DialogContentText>
+        <LabeledInput
+          value={milage}
+          onChange={onMilageChange}
+          label="Current service milage"
+        ></LabeledInput>
+      </DialogContent>
+      <DialogActions>
+        <Button type="outlined" onClick={handleClose}>
+          Cancel
+        </Button>
+        {isLoading ? (
+          <CircularProgress disableShrink />
+        ) : (
+          <Button onClick={confirmService}>Confirm</Button>
+        )}
+      </DialogActions>
+    </Dialog>
   );
 }
 
