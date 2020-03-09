@@ -1,5 +1,7 @@
 .App {
-  text-align: center;
+  /* text-align: center; */
+  width: 100%;
+  height: 100%;
 }
 
 .App-logo {
@@ -14,15 +16,15 @@
 
 @keyframes ckw {
   0% {
-      transform: rotate(0deg);
+    transform: rotate(0deg);
   }
   100% {
-      transform: rotate(360deg);
+    transform: rotate(360deg);
   }
 }
 
 .App-link {
-  color: #3842C1;
+  color: #3842c1;
 }
 
 .App-input {
@@ -31,7 +33,7 @@
 }
 
 .App-button {
-  background-color: #3842C1;
+  background-color: #3842c1;
   color: #ffffff;
   border: #ffffff solid 3px;
   border-radius: 50px;
@@ -43,8 +45,8 @@
 
 .App-button:active {
   background-color: #ffffff;
-  color: #3842C1;
-  border-color: #3842C1;
+  color: #3842c1;
+  border-color: #3842c1;
 }
 
 .App-button:disabled {
