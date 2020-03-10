@@ -6,22 +6,18 @@ import LabeledInput from './LabeledInput';
 import './App.css';
 import Button from './Button';
 import axios from 'axios';
-import camryImage from './images/camry.png';
-import homeImage from './images/home.png';
+import carServiceImage from './images/car-service.png';
+import Backdrop from '@material-ui/core/Backdrop';
+import { keyframes } from '@emotion/core';
 import {
   BrowserRouter as Router,
   Switch,
   Route,
-  Link,
   useHistory,
   useParams
 } from 'react-router-dom';
 
 import { makeStyles } from '@material-ui/core/styles';
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemAvatar from '@material-ui/core/ListItemAvatar';
-import ListItemText from '@material-ui/core/ListItemText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
@@ -35,6 +31,12 @@ import { Snackbar } from '@material-ui/core';
 import MuiAlert, { AlertProps } from '@material-ui/lab/Alert';
 
 const ErrorContext = React.createContext();
+const LoadingContext = React.createContext();
+
+const fadeIn = keyframes`
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+`;
 
 function Alert(props) {
   return <MuiAlert elevation={6} variant="filled" {...props} />;
@@ -44,14 +46,13 @@ const AppContainer = styled('section')`
   display: flex;
 `;
 
-function ViewInfo() {}
-
-const DealerSearchWrapper = styled.div`
+const SearchWrapper = styled.div`
   display: flex;
   width: 100%;
   justify-content: center;
   align-items: center;
   background-color: #f8f9fe;
+  animation: ${fadeIn} 1s ease;
 `;
 
 const SearchControls = styled.div`
@@ -62,30 +63,43 @@ const SearchControls = styled.div`
   width: 50%;
 `;
 
+function VehicleDataSearch() {
+  return <CommonSearch headerText="Customer" redirectPath="vehicle-data" />;
+}
+
 function DealerSearch() {
+  return <CommonSearch headerText="Dealer Search" redirectPath="dealer" />;
+}
+
+function CommonSearch({ headerText, redirectPath }) {
   let history = useHistory();
   let [vin, setVin] = useState();
-  const handleInputChange = event => {
-    setVin(event.target.value);
+  const handleInputChange = LabeledInput.createInputHandler(setVin);
+
+  const handleSearch = () => {
+    history.push(`/${redirectPath}/${vin}`);
   };
-  const handleClick = () => {
-    history.push(`/dealer/${vin}`);
-  };
+
   return (
-    <DealerSearchWrapper>
-      <img height="500" src={homeImage} />
+    <SearchWrapper>
+      <img height="500" src={carServiceImage} />
       <SearchControls>
-        <h3>Dealer Search</h3>
+        <h3>{headerText}</h3>
         <LabeledInput
           placeholder={'Input VIN here'}
           value={vin}
           onChange={handleInputChange}
         />
-        <Button onClick={handleClick}>Search</Button>
+        <Button onClick={handleSearch}>Search</Button>
       </SearchControls>
-    </DealerSearchWrapper>
+    </SearchWrapper>
   );
 }
+
+CommonSearch.propTypes = {
+  headerText: PropTypes.string.isRequired,
+  redirectPath: PropTypes.string.isRequired
+};
 
 const ServiceCommon = styled.div`
   display: flex;
@@ -102,7 +116,7 @@ const ServiceScheduled = styled(ServiceCommon)`
   box-shadow: rgba(0, 0, 0, 0.16) 0px 3px 6px;
 `;
 
-const ServiceCompleted = styled(ServiceScheduled)`
+const ServiceCompleted = styled(ServiceCommon)`
   border: solid 1.3px #37c392;
   background-color: #effaf7;
   box-shadow: inset rgba(0, 0, 0, 0.16) 0px 0px 1px 0px;
@@ -144,7 +158,7 @@ const InfoContainer = styled.div`
   margin-left: 30px;
 `;
 
-const ActionContainer = styled.div`
+const StatusContainer = styled.div`
   width: 30%;
   display: flex;
   justify-content: flex-end;
@@ -197,7 +211,7 @@ function CheckMark() {
   );
 }
 
-const ServiceDetails = styled.div`
+const ServiceDetailsContainer = styled.div`
   width: 50%;
   display: flex;
   flex-direction: column;
@@ -217,23 +231,35 @@ const StartAction = styled.button`
   color: #0093fe;
 `;
 
-const CompletedLabel = styled.label`
+const Label = styled.label`
   font-size: 16px;
   font-weight: 600;
+`;
+
+const CompletedLabel = styled(Label)`
   color: #2e735c;
 `;
 
-const LockedLabel = styled.label`
-  font-size: 16px;
-  font-weight: 600;
+const LockedLabel = styled(Label)`
   color: #a8acad;
 `;
 
-const CarDetails = styled.div`
+const ScheduledLabel = styled(Label)`
+  color: #feb100;
+`;
+
+const CarDetailsContainer = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  width: 50%;
+`;
+
+const DetailsContainer = styled.div`
+  display: flex;
+  width: 100%;
+  animation: ${fadeIn} 1s ease;
 `;
 
 const CarModel = styled.h2``;
@@ -256,36 +282,45 @@ const CardValue = styled.div`
   margin-top: 10px;
   font-weight: 500;
 `;
-const Milage = styled.p``;
 
-function Service() {}
+const CardContainer = styled.div`
+  display: flex;
+`;
 
 const carImages = {
   TC2020: require('./images/camry.png')
 };
 
-function Dealer() {
+function parseError(error) {
+  return (
+    error && ((error.response && error.response.data.message) || error.message)
+  );
+}
+
+function VehicleDetails({ isDealer }) {
   let { vin } = useParams();
 
   const [open, setOpen] = React.useState(false);
   const [vehicleDetails, setVehicleDetails] = useState();
   const [currentMaintenance, setCurrentMaintenance] = React.useState();
   const setErrorMessage = useContext(ErrorContext);
+  const setLoading = useContext(LoadingContext);
 
-  const handleClickOpen = () => {
+  const openStartServiceDialog = () => {
     setOpen(true);
   };
 
   const fetchMaintenanceHistory = async () => {
     try {
+      setLoading(true);
       const response = await axios.get(
         `http://localhost:4000/api/maintenance-history/${vin}`
       );
       setVehicleDetails(response.data);
     } catch (error) {
-      setErrorMessage(
-        error && ((error.response && error.response.data) || error.message)
-      );
+      setErrorMessage(parseError(error));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -302,89 +337,20 @@ function Dealer() {
     setOpen(false);
   };
 
-  const createHandleMaintenanceStart = id => () => {
-    setCurrentMaintenance(id);
-    handleClickOpen();
-  };
-
   if (!vehicleDetails) {
     return null;
   }
   return (
-    <>
-      <CarDetails>
-        <img src={carImages[vehicleDetails.id]}></img>
-        <CarModel>{vehicleDetails.name}</CarModel>
-        <div>
-          <Card>
-            <CardTitle>VIN</CardTitle>
-            <CardValue>{vin}</CardValue>
-          </Card>
-          <Card>
-            <CardTitle>Last service at</CardTitle>
-            <CardValue>{vehicleDetails.lastServiceMilage} miles</CardValue>
-          </Card>
-        </div>
-      </CarDetails>
-      <ServiceDetails>
-        <h3>Select a service</h3>
-        {vehicleDetails.maintenanceData.map((entry, index) => {
-          switch (entry.status) {
-            case 'completed':
-              return (
-                <ServiceCompleted key={entry.id}>
-                  <DotCompleted></DotCompleted>
-                  <InfoContainer>
-                    <TextCompleted>
-                      {vehicleDetails.maintenanceDetails[entry.id].title}
-                    </TextCompleted>
-                    <MoreInfoCompleted>More info</MoreInfoCompleted>
-                  </InfoContainer>
-                  <ActionContainer>
-                    <CompletedLabel>Completed</CompletedLabel>
-                  </ActionContainer>
-                </ServiceCompleted>
-              );
-            case 'scheduled':
-              return (
-                <ServiceScheduled key={entry.id}>
-                  <DotStart>{index + 1}</DotStart>
-                  <InfoContainer>
-                    <Text>
-                      {vehicleDetails.maintenanceDetails[entry.id].title}
-                    </Text>
-                    <MoreInfo>More info</MoreInfo>
-                  </InfoContainer>
-                  <ActionContainer>
-                    <StartAction
-                      onClick={createHandleMaintenanceStart(entry.id)}
-                    >
-                      Start
-                    </StartAction>
-                  </ActionContainer>
-                </ServiceScheduled>
-              );
-            case 'future':
-              return (
-                <ServiceLocked key={entry.id}>
-                  <DotLocked>{index + 1}</DotLocked>
-                  <InfoContainer>
-                    <TextLocked>
-                      {vehicleDetails.maintenanceDetails[entry.id].title}
-                    </TextLocked>
-                    <MoreInfo>More info</MoreInfo>
-                  </InfoContainer>
-                  <ActionContainer>
-                    <LockedLabel>Locked</LockedLabel>
-                  </ActionContainer>
-                </ServiceLocked>
-              );
-            default:
-              throw new Error('Unsupported status');
-          }
-        })}
-      </ServiceDetails>
-      <SimpleDialog
+    <DetailsContainer>
+      <CarDetails vehicleDetails={vehicleDetails} vin={vin} />
+      <ServiceDetails
+        maintenanceDetails={vehicleDetails.maintenanceDetails}
+        maintenanceData={vehicleDetails.maintenanceData}
+        openStartServiceDialog={openStartServiceDialog}
+        setCurrentMaintenance={setCurrentMaintenance}
+        isDealer={isDealer}
+      />
+      <StartServiceDialog
         open={open}
         onClose={handleClose}
         currentMaintenance={currentMaintenance}
@@ -392,11 +358,112 @@ function Dealer() {
         maintenanceDetails={vehicleDetails.maintenanceDetails}
         vin={vin}
       />
-    </>
+    </DetailsContainer>
   );
 }
 
-function FindByVin() {}
+function CarDetails({ vehicleDetails, vin }) {
+  return (
+    <CarDetailsContainer>
+      <img src={carImages[vehicleDetails.id]}></img>
+      <CarModel>{vehicleDetails.name}</CarModel>
+      <CardContainer>
+        <Card>
+          <CardTitle>VIN</CardTitle>
+          <CardValue>{vin}</CardValue>
+        </Card>
+        <Card>
+          <CardTitle>Last service at</CardTitle>
+          <CardValue>{vehicleDetails.lastServiceMilage} miles</CardValue>
+        </Card>
+      </CardContainer>
+    </CarDetailsContainer>
+  );
+}
+
+function ServiceDetails({
+  maintenanceData,
+  maintenanceDetails,
+  openStartServiceDialog,
+  setCurrentMaintenance,
+  isDealer
+}) {
+  const createHandleMaintenanceStart = id => () => {
+    setCurrentMaintenance(id);
+    openStartServiceDialog();
+  };
+  return (
+    <ServiceDetailsContainer>
+      {isDealer ? <h3>Select a service</h3> : <h3>Maintenance History</h3>}
+      {maintenanceData.map((entry, index) => {
+        const title = maintenanceDetails[entry.id].title;
+        switch (entry.status) {
+          case 'completed':
+            return (
+              <ServiceCompleted key={entry.id}>
+                <DotCompleted></DotCompleted>
+                <InfoContainer>
+                  <TextCompleted>{title}</TextCompleted>
+                  <MoreInfoCompleted>More info</MoreInfoCompleted>
+                </InfoContainer>
+                <StatusContainer>
+                  <CompletedLabel>Completed</CompletedLabel>
+                </StatusContainer>
+              </ServiceCompleted>
+            );
+          case 'scheduled':
+            if (isDealer) {
+              return (
+                <ServiceScheduled key={entry.id}>
+                  <DotStart>{index + 1}</DotStart>
+                  <InfoContainer>
+                    <Text>{title}</Text>
+                    <MoreInfo>More info</MoreInfo>
+                  </InfoContainer>
+                  <StatusContainer>
+                    <StartAction
+                      onClick={createHandleMaintenanceStart(entry.id)}
+                    >
+                      Start
+                    </StartAction>
+                  </StatusContainer>
+                </ServiceScheduled>
+              );
+            } else {
+              return (
+                <ServiceScheduled key={entry.id}>
+                  <DotStart>{index + 1}</DotStart>
+                  <InfoContainer>
+                    <Text>{title}</Text>
+                    <MoreInfo>More info</MoreInfo>
+                  </InfoContainer>
+                  <StatusContainer>
+                    <ScheduledLabel>Scheduled</ScheduledLabel>
+                  </StatusContainer>
+                </ServiceScheduled>
+              );
+            }
+
+          case 'future':
+            return (
+              <ServiceLocked key={entry.id}>
+                <DotLocked>{index + 1}</DotLocked>
+                <InfoContainer>
+                  <TextLocked>{title}</TextLocked>
+                  <MoreInfo>More info</MoreInfo>
+                </InfoContainer>
+                <StatusContainer>
+                  <LockedLabel>Locked</LockedLabel>
+                </StatusContainer>
+              </ServiceLocked>
+            );
+          default:
+            throw new Error('Unsupported status');
+        }
+      })}
+    </ServiceDetailsContainer>
+  );
+}
 
 const HomeWrapper = styled.div`
   display: flex;
@@ -405,6 +472,7 @@ const HomeWrapper = styled.div`
   align-items: center;
   width: 100%;
   background-color: #f8f9fe;
+  animation: ${fadeIn} 1s ease;
 `;
 
 const TileWrapper = styled.div`
@@ -435,11 +503,11 @@ function Home() {
     history.push('/dealer');
   };
   const onSearchTileClick = () => {
-    history.push('/search');
+    history.push('/vehicle-data');
   };
   return (
     <HomeWrapper>
-      <img height="500" src={homeImage} />
+      <img height="500" src={carServiceImage} />
       <TileWrapper>
         <Tile onClick={onDealerTileClick}>
           <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAABmJLR0QA/wD/AP+gvaeTAAAC40lEQVRoge2YTUhUURTHf+f6VCw3FS5kolo4EKGrjCjc265NFERSURSEY0nQThfSxyJMnDcQ7SJatgqCahX0sdDa9EGLDCRqUSAUuJGce1p4dT70zYcz45ux99u8efec+7/ncO68d+6DiIiIiIgQEAB8qyHHURkJIybsGKqFl3OXMBJSHOsjaydtmopsmkRyt1YD/+mFpHYg+ivsQCqiRTo8lLh7CL8lYQ6EHFJ5+HYa6OUvcYPQtTSqX0INal3ojPvRZTA2vjRGAybiYra2y6CuIsbMFJpRl6iLWYgbROJuuAETcTGrZFXEBiTi22mS9mWgWCn2lH1dwfw3gfPFbS0hnnkhNtOyyvGuxoBehD4mtHPdduVwBfMPBc6H1uUfBpgGIM2pVW7ZY011aJeVsSnB137Qp8ACyCjw0DkNoDoGK5WqV3szKkfceURHQMdWZQyKyiiC1KkdVEYYkuuZtj3TZ80Di8AUKuMMyXOXbD/oVWD57R+m3QPagTWOHr7Vhmoa8+LdNG18lEi94RV3Ae7pFhY4juhRoBvYAWwDFPgNzAEfQJ7QwiMuyp8N1WP5cxBknlr5T4GU7gZ9gbKnpKThB4vSx7DMrmmtll5evMW3luq4W/QzyHms9IDEaJc22qUNJIaVHlQuAF+BGJ69tWF6jsIVmdBOPP0GWNKyiyvys6BaUnciOgssIhJjUOZy7NXUK6siHgOAh/C46KIAQ/IdeAa0omv0RtXWy5EuiJ5dunCs/JelngMma6uXIbgiKT0I7C1vsRx6mNT9NdPLI7gi1p5GBERvM9h0rawl/fQdkGGMPQO8q4leHsEVETkBQNo8wE/fxLfzpNI3CiyW8Wky953IyZrplZwIbAfgsnwESQBb3TWALJ9L8j5HozZ6JSeSpalJYB7VZEU+tdLLIb+Nr7St32C94r1Wtc8oNTrz/Afdr/IKoW/lXqSbQflUUC2p+xDN9sl8r6q2XkRERERD8w8UB9m190Ui3gAAAABJRU5ErkJggg==" />
@@ -454,43 +522,40 @@ function Home() {
   );
 }
 
-const emails = ['username@gmail.com', 'user02@gmail.com'];
-const useStyles = makeStyles({
-  avatar: {
-    backgroundColor: blue[100],
-    color: blue[600]
+const useStyles = makeStyles(theme => ({
+  loader: {
+    zIndex: theme.zIndex.drawer + 200,
+    color: '#fff'
   }
-});
+}));
 
-function SimpleDialog(props) {
-  const classes = useStyles();
-
+function StartServiceDialog({
+  onClose,
+  currentMaintenance,
+  onServiceConfirm,
+  maintenanceDetails,
+  open,
+  vin
+}) {
   const setErrorMessage = useContext(ErrorContext);
-  const {
-    onClose,
-    currentMaintenance,
-    onServiceConfirm,
-    maintenanceDetails,
-    open,
-    vin
-  } = props;
+  const setLoading = useContext(LoadingContext);
+
   const [milage, setMilage] = useState();
-  const onMilageChange = LabeledInput.createInputHandler(setMilage);
-  const [isLoading, setLoading] = useState(false);
+
+  const handleMilageChange = LabeledInput.createInputHandler(setMilage);
 
   const confirmService = async () => {
-    // setLoading(true);
+    setLoading(true);
     try {
       await axios.post(`http://localhost:4000/api/maintenance-history/${vin}`, {
         lastServiceMilage: milage,
         maintenanceHash: currentMaintenance
       });
       onServiceConfirm();
-      setLoading(false);
     } catch (error) {
-      setErrorMessage(
-        error && ((error.response && error.response.data) || error.message)
-      );
+      setErrorMessage(parseError(error));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -498,9 +563,6 @@ function SimpleDialog(props) {
     onClose();
   };
 
-  const handleListItemClick = value => {
-    onClose(value);
-  };
   return (
     <Dialog
       onClose={handleClose}
@@ -522,7 +584,7 @@ function SimpleDialog(props) {
         </DialogContentText>
         <LabeledInput
           value={milage}
-          onChange={onMilageChange}
+          onChange={handleMilageChange}
           label="Current service milage"
         ></LabeledInput>
       </DialogContent>
@@ -530,11 +592,7 @@ function SimpleDialog(props) {
         <Button type="outlined" onClick={handleClose}>
           Cancel
         </Button>
-        {isLoading ? (
-          <CircularProgress disableShrink />
-        ) : (
-          <Button onClick={confirmService}>Confirm</Button>
-        )}
+        <Button onClick={confirmService}>Confirm</Button>
       </DialogActions>
     </Dialog>
   );
@@ -542,47 +600,60 @@ function SimpleDialog(props) {
 
 function App() {
   const [errorMessage, setErrorMessage] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleErrorClose = () => {
     setErrorMessage('');
   };
+
+  const classes = useStyles();
+
   return (
     <ErrorBoundary>
       <ErrorContext.Provider value={setErrorMessage}>
-        <Router>
-          <AppContainer className="App">
-            <Snackbar
-              anchorOrigin={{
-                vertical: 'top',
-                horizontal: 'right'
-              }}
-              open={!!errorMessage}
-              autoHideDuration={6000}
-              onClose={handleErrorClose}
-              message={errorMessage}
-            >
-              <Alert onClose={handleErrorClose} severity="error">
-                {errorMessage}
-              </Alert>
-            </Snackbar>
-            <Switch>
-              <Route exact path="/dealer">
-                <DealerSearch />
-              </Route>
-              <Route path="/dealer/:vin">
-                <Dealer />
-              </Route>
+        <LoadingContext.Provider value={setLoading}>
+          <Backdrop className={classes.loader} open={loading}>
+            <CircularProgress color="inherit" />
+          </Backdrop>
+          <Router>
+            <AppContainer className="App">
+              <Snackbar
+                anchorOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right'
+                }}
+                open={!!errorMessage}
+                autoHideDuration={6000}
+                onClose={handleErrorClose}
+                message={errorMessage}
+              >
+                <Alert onClose={handleErrorClose} severity="error">
+                  {errorMessage}
+                </Alert>
+              </Snackbar>
+              <Switch>
+                <Route exact path="/dealer">
+                  <DealerSearch />
+                </Route>
+                <Route path="/dealer/:vin">
+                  <VehicleDetails isDealer />
+                </Route>
 
-              <Route path="/users">
-                <ViewInfo />
-              </Route>
+                <Route exact path="/vehicle-data">
+                  <VehicleDataSearch />
+                </Route>
 
-              <Route path="/">
-                <Home />
-              </Route>
-            </Switch>
-          </AppContainer>
-        </Router>
+                <Route path="/vehicle-data/:vin">
+                  <VehicleDetails />
+                </Route>
+
+                <Route path="/">
+                  <Home />
+                </Route>
+              </Switch>
+            </AppContainer>
+          </Router>
+        </LoadingContext.Provider>
       </ErrorContext.Provider>
     </ErrorBoundary>
   );

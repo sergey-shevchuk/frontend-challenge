@@ -70,7 +70,19 @@ const maintenanceDetails = {
 };
 
 const vinToDetails = {
-  '2C4HD51R4WH170': {
+  '2C4HD51R4WH172': {
+    id: 'TC2020',
+    name: '2020 Toyota Camry',
+    requiredMaintenance: [
+      '6021cc5e3e7d69081762095f6cfac0eb',
+      'd88810cef5584d1b9c7879b3e4b4c5a2',
+      '5173841c64bdd80d16df6e933d69b2bd',
+      'f5e8b351fb731318df2d6b18208dcbcf',
+      '96ead03102ed5a9c105ea9dbeb60bc6c',
+      'b9195e914e4b315e8f5a6315163269c1'
+    ]
+  },
+  '4C4HD51R4WH172': {
     id: 'TC2020',
     name: '2020 Toyota Camry',
     requiredMaintenance: [
