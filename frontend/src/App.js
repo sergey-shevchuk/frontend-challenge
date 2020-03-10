@@ -27,8 +27,10 @@ import ErrorBoundary from './ErrorBoundary';
 import { Snackbar } from '@material-ui/core';
 import MuiAlert, { AlertProps } from '@material-ui/lab/Alert';
 
-import Home from './components/Home';
 import fadeIn from './animations/fade-in';
+import Home from './components/Home';
+import VehicleDataSearch from './components/search/VehicleDataSearch';
+import DealerSearch from './components/search/DealerSearch';
 
 const ErrorContext = React.createContext();
 const LoadingContext = React.createContext();
@@ -40,61 +42,6 @@ function Alert(props) {
 const AppContainer = styled('section')`
   display: flex;
 `;
-
-const SearchWrapper = styled.div`
-  display: flex;
-  width: 100%;
-  justify-content: center;
-  align-items: center;
-  background-color: #f8f9fe;
-  animation: ${fadeIn} 1s ease;
-`;
-
-const SearchControls = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  width: 50%;
-`;
-
-function VehicleDataSearch() {
-  return <CommonSearch headerText="Vehicle Data" redirectPath="vehicle-data" />;
-}
-
-function DealerSearch() {
-  return <CommonSearch headerText="Dealer Search" redirectPath="dealer" />;
-}
-
-function CommonSearch({ headerText, redirectPath }) {
-  let history = useHistory();
-  let [vin, setVin] = useState();
-  const handleInputChange = LabeledInput.createInputHandler(setVin);
-
-  const handleSearch = () => {
-    history.push(`/${redirectPath}/${vin}`);
-  };
-
-  return (
-    <SearchWrapper>
-      <img height="500" src={carServiceImage} />
-      <SearchControls>
-        <h3>{headerText}</h3>
-        <LabeledInput
-          placeholder={'Input VIN here'}
-          value={vin}
-          onChange={handleInputChange}
-        />
-        <Button onClick={handleSearch}>Search</Button>
-      </SearchControls>
-    </SearchWrapper>
-  );
-}
-
-CommonSearch.propTypes = {
-  headerText: PropTypes.string.isRequired,
-  redirectPath: PropTypes.string.isRequired
-};
 
 const ServiceCommon = styled.div`
   display: flex;
@@ -283,7 +230,9 @@ const CardContainer = styled.div`
 `;
 
 const carImages = {
-  TC2020: require('./images/camry.png')
+  TC2020: require('./images/camry.png'),
+  TR2020: require('./images/rav4.png'),
+  TS2020: require('./images/sequoia.png')
 };
 
 function parseError(error) {
