@@ -28,12 +28,11 @@ import { Snackbar } from '@material-ui/core';
 import MuiAlert, { AlertProps } from '@material-ui/lab/Alert';
 
 import fadeIn from './animations/fade-in';
+import ErrorMessageContext from './context/ErrorMessageContext';
+import LoadingContext from './context/LoadingContext';
 import Home from './components/Home';
 import VehicleDataSearch from './components/search/VehicleDataSearch';
 import DealerSearch from './components/search/DealerSearch';
-
-const ErrorContext = React.createContext();
-const LoadingContext = React.createContext();
 
 function Alert(props) {
   return <MuiAlert elevation={6} variant="filled" {...props} />;
@@ -247,7 +246,7 @@ function VehicleDetails({ isDealer }) {
   const [open, setOpen] = React.useState(false);
   const [vehicleDetails, setVehicleDetails] = useState();
   const [currentMaintenance, setCurrentMaintenance] = React.useState();
-  const setErrorMessage = useContext(ErrorContext);
+  const setErrorMessage = useContext(ErrorMessageContext);
   const setLoading = useContext(LoadingContext);
 
   const openStartServiceDialog = () => {
@@ -424,7 +423,7 @@ function StartServiceDialog({
   open,
   vin
 }) {
-  const setErrorMessage = useContext(ErrorContext);
+  const setErrorMessage = useContext(ErrorMessageContext);
   const setLoading = useContext(LoadingContext);
 
   const [milage, setMilage] = useState();
@@ -497,7 +496,7 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <ErrorContext.Provider value={setErrorMessage}>
+      <ErrorMessageContext.Provider value={setErrorMessage}>
         <LoadingContext.Provider value={setLoading}>
           <Backdrop className={classes.loader} open={loading}>
             <CircularProgress color="inherit" />
@@ -541,7 +540,7 @@ function App() {
             </AppContainer>
           </Router>
         </LoadingContext.Provider>
-      </ErrorContext.Provider>
+      </ErrorMessageContext.Provider>
     </ErrorBoundary>
   );
 }
