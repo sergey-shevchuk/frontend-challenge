@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState } from 'react';
 import styled from '@emotion/styled/macro';
 import './App.css';
 import Backdrop from '@material-ui/core/Backdrop';

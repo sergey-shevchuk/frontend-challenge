@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useContext } from 'react';
+import styled from '@emotion/styled/macro';
 import LabeledInput from '../common/LabeledInput';
 import Button from '../common/Button';
 import axios from 'axios';
@@ -7,11 +8,16 @@ import DialogTitle from '@material-ui/core/DialogTitle';
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
-import DialogContentText from '@material-ui/core/DialogContentText';
 
 import ErrorMessageContext from '../../context/ErrorMessageContext';
 import LoadingContext from '../../context/LoadingContext';
 import parseError from '../../utils/parse-error';
+
+const DialogContentText = styled.div`
+  display: flex;
+  flex-direction: column;
+  color: rgba(0, 0, 0, 0.7);
+`;
 
 export default function StartServiceDialog({
   onClose,

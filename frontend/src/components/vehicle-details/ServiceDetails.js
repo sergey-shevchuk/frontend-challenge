@@ -155,17 +155,24 @@ export default function ServiceDetails({
   maintenanceDetails,
   openStartServiceDialog,
   setCurrentMaintenance,
-  isDealer
+  isDealer,
+  openMoreDetailsDialog,
+  setMoreDetailsSelected
 }) {
   const createHandleMaintenanceStart = id => () => {
     setCurrentMaintenance(id);
     openStartServiceDialog();
+  };
+  const createHandleMoreInfoClick = id => () => {
+    setMoreDetailsSelected(id);
+    openMoreDetailsDialog();
   };
   return (
     <ServiceDetailsContainer>
       {isDealer ? <h3>Select a service</h3> : <h3>Maintenance History</h3>}
       {maintenanceData.map((entry, index) => {
         const title = maintenanceDetails[entry.id].title;
+
         switch (entry.status) {
           case 'completed':
             return (
@@ -173,7 +180,11 @@ export default function ServiceDetails({
                 <DotCompleted></DotCompleted>
                 <InfoContainer>
                   <TextCompleted>{title}</TextCompleted>
-                  <MoreInfoCompleted>More info</MoreInfoCompleted>
+                  <MoreInfoCompleted
+                    onClick={createHandleMoreInfoClick(entry.id)}
+                  >
+                    More info
+                  </MoreInfoCompleted>
                 </InfoContainer>
                 <StatusContainer>
                   <CompletedLabel>Completed</CompletedLabel>
@@ -187,7 +198,9 @@ export default function ServiceDetails({
                   <DotScheduledDealer>{index + 1}</DotScheduledDealer>
                   <InfoContainer>
                     <Text>{title}</Text>
-                    <MoreInfo>More info</MoreInfo>
+                    <MoreInfo onClick={createHandleMoreInfoClick(entry.id)}>
+                      More info
+                    </MoreInfo>
                   </InfoContainer>
                   <StatusContainer>
                     <StartAction
@@ -204,7 +217,9 @@ export default function ServiceDetails({
                   <DotScheduled>{index + 1}</DotScheduled>
                   <InfoContainer>
                     <Text>{title}</Text>
-                    <MoreInfo>More info</MoreInfo>
+                    <MoreInfo onClick={createHandleMoreInfoClick(entry.id)}>
+                      More info
+                    </MoreInfo>
                   </InfoContainer>
                   <StatusContainer>
                     <ScheduledLabel>Scheduled</ScheduledLabel>
@@ -219,7 +234,9 @@ export default function ServiceDetails({
                 <DotLocked>{index + 1}</DotLocked>
                 <InfoContainer>
                   <TextLocked>{title}</TextLocked>
-                  <MoreInfo>More info</MoreInfo>
+                  <MoreInfo onClick={createHandleMoreInfoClick(entry.id)}>
+                    More info
+                  </MoreInfo>
                 </InfoContainer>
                 <StatusContainer>
                   <LockedLabel>Locked</LockedLabel>
