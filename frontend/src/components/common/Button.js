@@ -24,7 +24,7 @@ const Button = styled.button(
       transition: 'all 0.15s ease'
     }
   },
-  ({ type, size }) => {
+  ({ type, size, color = '#0093fe' }) => {
     let styles = {};
     switch (type) {
       case 'outlined':
@@ -43,8 +43,7 @@ const Button = styled.button(
           ...styles,
           color: 'rgba(255, 255, 255, 0.9)',
           border: '0',
-          backgroundImage:
-            'linear-gradient(to bottom left, #0093fe, #0093fe, #0093fe)',
+          backgroundImage: `linear-gradient(to bottom left, ${color}, ${color}, ${color})`,
           backgroundSize: '200% 200%',
           backgroundPosition: '100% 0'
         };
@@ -67,10 +66,3 @@ const Button = styled.button(
 );
 
 export default Button;
-
-export const __cards__ = define => {
-  define('Default', (state, update) => <Button>Default</Button>);
-  define('Outlined', (state, update) => (
-    <Button type="outlined">Outlined</Button>
-  ));
-};

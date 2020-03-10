@@ -25,7 +25,11 @@ const SearchControls = styled.div`
   width: 50%;
 `;
 
-export default function CommonSearch({ headerText, redirectPath }) {
+export default function CommonSearch({
+  headerText,
+  redirectPath,
+  buttonColor = '#0093fe'
+}) {
   let history = useHistory();
   let [vin, setVin] = useState();
   const handleInputChange = LabeledInput.createInputHandler(setVin);
@@ -44,7 +48,9 @@ export default function CommonSearch({ headerText, redirectPath }) {
           value={vin}
           onChange={handleInputChange}
         />
-        <Button onClick={handleSearch}>Search</Button>
+        <Button onClick={handleSearch} color={buttonColor}>
+          Search
+        </Button>
       </SearchControls>
     </SearchWrapper>
   );

@@ -1,17 +1,5 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React from 'react';
 import styled from '@emotion/styled/macro';
-import LabeledInput from '../common/LabeledInput';
-import Button from '../common/Button';
-import axios from 'axios';
-
-import DialogTitle from '@material-ui/core/DialogTitle';
-import Dialog from '@material-ui/core/Dialog';
-import DialogActions from '@material-ui/core/DialogActions';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogContentText from '@material-ui/core/DialogContentText';
-
-import ErrorMessageContext from '../../context/ErrorMessageContext';
-import LoadingContext from '../../context/LoadingContext';
 import CheckMark from './CheckMark';
 
 const ServiceCommon = styled.div`
@@ -24,9 +12,13 @@ const ServiceCommon = styled.div`
 `;
 
 const ServiceScheduled = styled(ServiceCommon)`
-  border: solid 1.3px #0093fe;
+  border: solid 1.3px #feb100;
   background-color: white;
   box-shadow: rgba(0, 0, 0, 0.16) 0px 3px 6px;
+`;
+
+const ServiceScheduledDealer = styled(ServiceScheduled)`
+  border: solid 1.3px #0093fe;
 `;
 
 const ServiceCompleted = styled(ServiceCommon)`
@@ -90,7 +82,13 @@ const DotContainerCommon = styled.div`
   line-height: 20px;
 `;
 
-const DotStart = styled(DotContainerCommon)`
+const DotScheduled = styled(DotContainerCommon)`
+  background-color: white;
+  color: #feb100;
+  border: solid 1.3px #feb100;
+`;
+
+const DotScheduledDealer = styled(DotContainerCommon)`
   background-color: white;
   color: #0093fe;
   border: solid 1.3px #0093fe;
@@ -100,14 +98,6 @@ const DotCompletedContainer = styled(DotContainerCommon)`
   background-color: #21c08c;
   border: solid 1.3px #21c08c;
 `;
-
-function DotCompleted() {
-  return (
-    <DotCompletedContainer>
-      <CheckMark />
-    </DotCompletedContainer>
-  );
-}
 
 const DotLocked = styled(DotContainerCommon)`
   background-color: white;
@@ -152,6 +142,14 @@ const ScheduledLabel = styled(Label)`
   color: #feb100;
 `;
 
+function DotCompleted() {
+  return (
+    <DotCompletedContainer>
+      <CheckMark />
+    </DotCompletedContainer>
+  );
+}
+
 export default function ServiceDetails({
   maintenanceData,
   maintenanceDetails,
@@ -185,8 +183,8 @@ export default function ServiceDetails({
           case 'scheduled':
             if (isDealer) {
               return (
-                <ServiceScheduled key={entry.id}>
-                  <DotStart>{index + 1}</DotStart>
+                <ServiceScheduledDealer key={entry.id}>
+                  <DotScheduledDealer>{index + 1}</DotScheduledDealer>
                   <InfoContainer>
                     <Text>{title}</Text>
                     <MoreInfo>More info</MoreInfo>
@@ -198,12 +196,12 @@ export default function ServiceDetails({
                       Start
                     </StartAction>
                   </StatusContainer>
-                </ServiceScheduled>
+                </ServiceScheduledDealer>
               );
             } else {
               return (
                 <ServiceScheduled key={entry.id}>
-                  <DotStart>{index + 1}</DotStart>
+                  <DotScheduled>{index + 1}</DotScheduled>
                   <InfoContainer>
                     <Text>{title}</Text>
                     <MoreInfo>More info</MoreInfo>
