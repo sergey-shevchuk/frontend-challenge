@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import logo from './logo.svg';
 import styled from '@emotion/styled/macro';
@@ -18,8 +18,6 @@ import {
 } from 'react-router-dom';
 
 import { makeStyles } from '@material-ui/core/styles';
-import ButtonM from '@material-ui/core/Button';
-import Avatar from '@material-ui/core/Avatar';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemAvatar from '@material-ui/core/ListItemAvatar';
@@ -32,93 +30,7 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import Typography from '@material-ui/core/Typography';
 import { blue } from '@material-ui/core/colors';
 import CircularProgress from '@material-ui/core/CircularProgress';
-
-const maintenanceMap = {
-  '6021cc5e3e7d69081762095f6cfac0eb': {
-    title: '5,000 Miles or 6 Months',
-    maintenancePerformed: [
-      'Check installation of driver’s floor mat',
-      'Inspect and adjust all fluid levels',
-      'Inspect wiper blades',
-      'Rotate tires',
-      'Visually inspect brake linings/drums and brake pads'
-    ]
-  },
-  'd88810cef5584d1b9c7879b3e4b4c5a2': {
-    title: '10,000 Miles or 12 Months',
-    maintenancePerformed: [
-      'Check installation of driver’s floor mat',
-      'Inspect and adjust all fluid levels',
-      'Inspect wiper blades',
-      'Replace cabin air filter',
-      'Replace engine oil and oil filter',
-      'Rotate tires',
-      'Visually inspect brake linings/drums and brake pads/discs'
-    ]
-  },
-  '5173841c64bdd80d16df6e933d69b2bd': {
-    title: '15,000 Miles or 18 Months',
-    maintenancePerformed: [
-      'Check installation of driver’s floor mat',
-      'Inspect and adjust all fluid levels',
-      'Inspect wiper blades',
-      'Rotate tires',
-      'Visually inspect brake linings/drums and brake pads/discs',
-      'Inspect The Following Ball Joint and Dust Covers, Brake Lines and Hoses, Drive Shaft Boots, Engine Coolant, Exhaust Pipes and Mountings, Radiator and Condenser, Steering Gear, Steering Linkage and Boots'
-    ]
-  },
-  'f5e8b351fb731318df2d6b18208dcbcf': {
-    title: '20,000 Miles or 24 Months',
-    maintenancePerformed: [
-      'Check installation of driver’s floor mat',
-      'Inspect and adjust all fluid levels',
-      'Inspect wiper blades',
-      'Replace cabin air filter',
-      'Replace engine oil and oil filter',
-      'Rotate tires',
-      'Visually inspect brake linings/drums and brake pads/discs'
-    ]
-  },
-  '96ead03102ed5a9c105ea9dbeb60bc6c': {
-    title: '25,000 Miles or 30 Months',
-    maintenancePerformed: [
-      'Check installation of driver’s floor mat',
-      'Inspect and adjust all fluid levels',
-      'Inspect wiper blades',
-      'Rotate tires',
-      'Visually inspect brake linings/drums and brake pads/discs'
-    ]
-  },
-  'b9195e914e4b315e8f5a6315163269c1': {
-    title: '30,000 Miles or 36 Months',
-    maintenancePerformed: [
-      'Check installation of driver’s floor mat',
-      'Inspect and adjust all fluid levels',
-      'Inspect wiper blades',
-      'Replace cabin air filter',
-      'Replace engine oil and oil filter',
-      'Rotate tires',
-      'Replace engine air filter',
-      'Inspect The Following: Automatic Transmission for Signs of Leakage, Ball Joints and Dust Covers, Brake Lines and Hoses, Brake Linings/Drums and Brake Pads/Discs,'
-    ]
-  }
-};
-
-const data = {
-  '2C3HD46R4WH170': {
-    image: camryImage,
-    model: '2020 Toyota Camry',
-    milage: 32000,
-    serviceHistory: [
-      '6021cc5e3e7d69081762095f6cfac0eb',
-      'd88810cef5584d1b9c7879b3e4b4c5a2',
-      '5173841c64bdd80d16df6e933d69b2bd',
-      'f5e8b351fb731318df2d6b18208dcbcf',
-      '96ead03102ed5a9c105ea9dbeb60bc6c',
-      'b9195e914e4b315e8f5a6315163269c1'
-    ]
-  }
-};
+import ErrorBoundary from './ErrorBoundary';
 
 const AppContainer = styled('section')`
   display: flex;
@@ -167,13 +79,13 @@ const ServiceCommon = styled.div`
   margin: 10px;
 `;
 
-const Service = styled(ServiceCommon)`
+const ServiceScheduled = styled(ServiceCommon)`
   border: solid 1.3px #0093fe;
   background-color: white;
   box-shadow: rgba(0, 0, 0, 0.16) 0px 3px 6px;
 `;
 
-const ServiceCompleted = styled(Service)`
+const ServiceCompleted = styled(ServiceScheduled)`
   border: solid 1.3px #37c392;
   background-color: #effaf7;
   box-shadow: inset rgba(0, 0, 0, 0.16) 0px 0px 1px 0px;
@@ -268,19 +180,6 @@ function CheckMark() {
   );
 }
 
-function Dot({ type, index }) {
-  switch (type) {
-    case 'completed':
-      return (
-        <DotCompleted>
-          <CheckMark />
-        </DotCompleted>
-      );
-    default:
-      return <DotStart>{index}</DotStart>;
-  }
-}
-
 const ServiceDetails = styled.div`
   width: 50%;
   display: flex;
@@ -321,13 +220,38 @@ const CarDetails = styled.div`
 `;
 
 const CarModel = styled.h2``;
-const Vin = styled.p``;
+
+const Card = styled.div`
+  display: flex;
+  box-sizing: border-box;
+  flex-direction: column;
+  width: 200px;
+  height: 80px;
+  box-shadow: rgba(0, 0, 0, 0.16) 0px 3px 6px;
+  margin: 30px;
+  border-radius: 10px;
+  padding: 20px;
+`;
+const CardTitle = styled.div`
+  color: #636363;
+`;
+const CardValue = styled.div`
+  margin-top: 10px;
+  font-weight: 500;
+`;
 const Milage = styled.p``;
+
+function Service() {}
+
+const carImages = {
+  TC2020: require('./images/camry.png')
+};
 
 function Dealer() {
   let { vin } = useParams();
 
   const [open, setOpen] = React.useState(false);
+  const [vehicleDetails, setVehicleDetails] = useState();
   const [currentMaintenance, setCurrentMaintenance] = React.useState();
 
   const handleClickOpen = () => {
@@ -335,12 +259,15 @@ function Dealer() {
   };
 
   const fetchMaintenanceHistory = async () => {
-    const data = await axios.get(
+    const response = await axios.get(
       `http://localhost:4000/api/maintenance-history/${vin}`
     );
-    console.log(data);
-    return data;
+    setVehicleDetails(response.data);
   };
+
+  useEffect(() => {
+    fetchMaintenanceHistory();
+  }, []);
 
   const onServiceConfirm = () => {
     fetchMaintenanceHistory();
@@ -351,83 +278,86 @@ function Dealer() {
     setOpen(false);
   };
 
-  // if (!vin) {
-  // }
+  const createHandleMaintenanceStart = id => () => {
+    setCurrentMaintenance(id);
+    handleClickOpen();
+  };
 
-  const carDetails = data[vin];
+  if (!vehicleDetails) {
+    return null;
+  }
   return (
     <>
       <CarDetails>
-        {/* <h3>Car details</h3> */}
-        <img src={carDetails.image}></img>
-        <CarModel>{carDetails.model}</CarModel>
-        <Vin>VIN: {vin}</Vin>
-        <Milage>{carDetails.milage} miles</Milage>
+        <img src={carImages[vehicleDetails.id]}></img>
+        <CarModel>{vehicleDetails.name}</CarModel>
+        <div>
+          <Card>
+            <CardTitle>VIN</CardTitle>
+            <CardValue>{vin}</CardValue>
+          </Card>
+          <Card>
+            <CardTitle>Last service at</CardTitle>
+            <CardValue>{vehicleDetails.lastServiceMilage} miles</CardValue>
+          </Card>
+        </div>
       </CarDetails>
       <ServiceDetails>
         <h3>Select a service</h3>
-        {carDetails.serviceHistory.map((entry, index) => {
-          if (index === 0) {
-            return (
-              <ServiceCompleted>
-                <DotCompleted></DotCompleted>
-                <InfoContainer>
-                  <TextCompleted>{entry.title}</TextCompleted>
-                  <MoreInfoCompleted>More info</MoreInfoCompleted>
-                </InfoContainer>
-                <ActionContainer>
-                  <CompletedLabel>Completed</CompletedLabel>
-                </ActionContainer>
-                {/* <ul>
-              {entry.maintenancePerformed.map(maintenance => (
-                <li>{maintenance}</li>
-              ))}
-            </ul> */}
-              </ServiceCompleted>
-            );
-          } else if (index === 1) {
-            return (
-              <Service>
-                <DotStart>{index + 1}</DotStart>
-                <InfoContainer>
-                  <Text>{entry.title}</Text>
-                  <MoreInfo>More info</MoreInfo>
-                </InfoContainer>
-                <ActionContainer>
-                  <StartAction
-                    onClick={() => {
-                      setCurrentMaintenance(data[vin].serviceHistory[index]);
-                      handleClickOpen();
-                    }}
-                  >
-                    Start
-                  </StartAction>
-                </ActionContainer>
-                {/* <ul>
-              {entry.maintenancePerformed.map(maintenance => (
-                <li>{maintenance}</li>
-              ))}
-            </ul> */}
-              </Service>
-            );
+        {vehicleDetails.maintenanceData.map((entry, index) => {
+          switch (entry.status) {
+            case 'completed':
+              return (
+                <ServiceCompleted key={entry.id}>
+                  <DotCompleted></DotCompleted>
+                  <InfoContainer>
+                    <TextCompleted>
+                      {vehicleDetails.maintenanceDetails[entry.id].title}
+                    </TextCompleted>
+                    <MoreInfoCompleted>More info</MoreInfoCompleted>
+                  </InfoContainer>
+                  <ActionContainer>
+                    <CompletedLabel>Completed</CompletedLabel>
+                  </ActionContainer>
+                </ServiceCompleted>
+              );
+            case 'scheduled':
+              return (
+                <ServiceScheduled key={entry.id}>
+                  <DotStart>{index + 1}</DotStart>
+                  <InfoContainer>
+                    <Text>
+                      {vehicleDetails.maintenanceDetails[entry.id].title}
+                    </Text>
+                    <MoreInfo>More info</MoreInfo>
+                  </InfoContainer>
+                  <ActionContainer>
+                    <StartAction
+                      onClick={createHandleMaintenanceStart(entry.id)}
+                    >
+                      Start
+                    </StartAction>
+                  </ActionContainer>
+                </ServiceScheduled>
+              );
+            case 'future':
+              return (
+                <ServiceLocked key={entry.id}>
+                  <DotLocked>{index + 1}</DotLocked>
+                  <InfoContainer>
+                    <TextLocked>
+                      {vehicleDetails.maintenanceDetails[entry.id].title}
+                    </TextLocked>
+                    <MoreInfo>More info</MoreInfo>
+                  </InfoContainer>
+                  <ActionContainer>
+                    <LockedLabel>Locked</LockedLabel>
+                  </ActionContainer>
+                </ServiceLocked>
+              );
+            default:
+              throw new Error('Unsupported status');
           }
-          return (
-            <ServiceLocked>
-              <DotLocked>{index + 1}</DotLocked>
-              <InfoContainer>
-                <TextLocked>{entry.title}</TextLocked>
-                <MoreInfo>More info</MoreInfo>
-              </InfoContainer>
-              <ActionContainer>
-                <LockedLabel>Locked</LockedLabel>
-              </ActionContainer>
-              {/* <ul>
-            {entry.maintenancePerformed.map(maintenance => (
-              <li>{maintenance}</li>
-            ))}
-          </ul> */}
-            </ServiceLocked>
-          );
         })}
       </ServiceDetails>
       <SimpleDialog
@@ -435,6 +365,8 @@ function Dealer() {
         onClose={handleClose}
         currentMaintenance={currentMaintenance}
         onServiceConfirm={onServiceConfirm}
+        maintenanceDetails={vehicleDetails.maintenanceDetails}
+        vin={vin}
       />
     </>
   );
@@ -507,7 +439,14 @@ const useStyles = makeStyles({
 
 function SimpleDialog(props) {
   const classes = useStyles();
-  const { onClose, currentMaintenance, onServiceConfirm, open } = props;
+  const {
+    onClose,
+    currentMaintenance,
+    onServiceConfirm,
+    maintenanceDetails,
+    open,
+    vin
+  } = props;
   const [milage, setMilage] = useState();
   const onMilageChange = LabeledInput.createInputHandler(setMilage);
   const [isLoading, setLoading] = useState(false);
@@ -516,10 +455,10 @@ function SimpleDialog(props) {
     // setLoading(true);
 
     const response = await axios.post(
-      `http://localhost:4000/api/maintenance-history`,
+      `http://localhost:4000/api/maintenance-history/${vin}`,
       {
-        milage,
-        serviceHash: 'test'
+        lastServiceMilage: milage,
+        maintenanceHash: currentMaintenance
       }
     );
     console.log(milage);
@@ -533,7 +472,6 @@ function SimpleDialog(props) {
   const handleListItemClick = value => {
     onClose(value);
   };
-
   return (
     <Dialog
       onClose={handleClose}
@@ -543,11 +481,13 @@ function SimpleDialog(props) {
       <DialogTitle id="simple-dialog-title">Perform maintenance</DialogTitle>
       <DialogContent>
         <DialogContentText>
-          {currentMaintenance && currentMaintenance.title}
+          {currentMaintenance && maintenanceDetails[currentMaintenance].title}
           <ul>
             {currentMaintenance &&
-              currentMaintenance.maintenancePerformed.map(maintenance => (
-                <li>{maintenance}</li>
+              maintenanceDetails[
+                currentMaintenance
+              ].details.map(maintenance => (
+                <li key={maintenance}>{maintenance}</li>
               ))}
           </ul>
         </DialogContentText>
@@ -555,6 +495,7 @@ function SimpleDialog(props) {
           value={milage}
           onChange={onMilageChange}
           label="Current service milage"
+          pattern="[0-9]+"
         ></LabeledInput>
       </DialogContent>
       <DialogActions>
@@ -573,26 +514,28 @@ function SimpleDialog(props) {
 
 function App() {
   return (
-    <Router>
-      <AppContainer className="App">
-        <Switch>
-          <Route exact path="/dealer">
-            <DealerSearch />
-          </Route>
-          <Route path="/dealer/:vin">
-            <Dealer />
-          </Route>
+    <ErrorBoundary>
+      <Router>
+        <AppContainer className="App">
+          <Switch>
+            <Route exact path="/dealer">
+              <DealerSearch />
+            </Route>
+            <Route path="/dealer/:vin">
+              <Dealer />
+            </Route>
 
-          <Route path="/users">
-            <ViewInfo />
-          </Route>
+            <Route path="/users">
+              <ViewInfo />
+            </Route>
 
-          <Route path="/">
-            <Home />
-          </Route>
-        </Switch>
-      </AppContainer>
-    </Router>
+            <Route path="/">
+              <Home />
+            </Route>
+          </Switch>
+        </AppContainer>
+      </Router>
+    </ErrorBoundary>
   );
 }
 
