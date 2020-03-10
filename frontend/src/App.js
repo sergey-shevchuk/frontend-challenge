@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import PropTypes from 'prop-types';
 import logo from './logo.svg';
 import styled from '@emotion/styled/macro';
@@ -31,6 +31,14 @@ import Typography from '@material-ui/core/Typography';
 import { blue } from '@material-ui/core/colors';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import ErrorBoundary from './ErrorBoundary';
+import { Snackbar } from '@material-ui/core';
+import MuiAlert, { AlertProps } from '@material-ui/lab/Alert';
+
+const ErrorContext = React.createContext();
+
+function Alert(props) {
+  return <MuiAlert elevation={6} variant="filled" {...props} />;
+}
 
 const AppContainer = styled('section')`
   display: flex;
@@ -41,9 +49,18 @@ function ViewInfo() {}
 const DealerSearchWrapper = styled.div`
   display: flex;
   width: 100%;
+  justify-content: center;
+  align-items: center;
+  background-color: #f8f9fe;
 `;
 
-const SearchControls = styled.div``;
+const SearchControls = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 50%;
+`;
 
 function DealerSearch() {
   let history = useHistory();
@@ -56,7 +73,7 @@ function DealerSearch() {
   };
   return (
     <DealerSearchWrapper>
-      <img width={700} src={homeImage} />
+      <img height="500" src={homeImage} />
       <SearchControls>
         <h3>Dealer Search</h3>
         <LabeledInput
@@ -253,16 +270,23 @@ function Dealer() {
   const [open, setOpen] = React.useState(false);
   const [vehicleDetails, setVehicleDetails] = useState();
   const [currentMaintenance, setCurrentMaintenance] = React.useState();
+  const setErrorMessage = useContext(ErrorContext);
 
   const handleClickOpen = () => {
     setOpen(true);
   };
 
   const fetchMaintenanceHistory = async () => {
-    const response = await axios.get(
-      `http://localhost:4000/api/maintenance-history/${vin}`
-    );
-    setVehicleDetails(response.data);
+    try {
+      const response = await axios.get(
+        `http://localhost:4000/api/maintenance-history/${vin}`
+      );
+      setVehicleDetails(response.data);
+    } catch (error) {
+      setErrorMessage(
+        error && ((error.response && error.response.data) || error.message)
+      );
+    }
   };
 
   useEffect(() => {
@@ -377,6 +401,7 @@ function FindByVin() {}
 const HomeWrapper = styled.div`
   display: flex;
   flex-direction: row;
+  justify-content: center;
   align-items: center;
   width: 100%;
   background-color: #f8f9fe;
@@ -414,7 +439,7 @@ function Home() {
   };
   return (
     <HomeWrapper>
-      <img width={700} src={homeImage} />
+      <img height="500" src={homeImage} />
       <TileWrapper>
         <Tile onClick={onDealerTileClick}>
           <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAABmJLR0QA/wD/AP+gvaeTAAAC40lEQVRoge2YTUhUURTHf+f6VCw3FS5kolo4EKGrjCjc265NFERSURSEY0nQThfSxyJMnDcQ7SJatgqCahX0sdDa9EGLDCRqUSAUuJGce1p4dT70zYcz45ux99u8efec+7/ncO68d+6DiIiIiIgQEAB8qyHHURkJIybsGKqFl3OXMBJSHOsjaydtmopsmkRyt1YD/+mFpHYg+ivsQCqiRTo8lLh7CL8lYQ6EHFJ5+HYa6OUvcYPQtTSqX0INal3ojPvRZTA2vjRGAybiYra2y6CuIsbMFJpRl6iLWYgbROJuuAETcTGrZFXEBiTi22mS9mWgWCn2lH1dwfw3gfPFbS0hnnkhNtOyyvGuxoBehD4mtHPdduVwBfMPBc6H1uUfBpgGIM2pVW7ZY011aJeVsSnB137Qp8ACyCjw0DkNoDoGK5WqV3szKkfceURHQMdWZQyKyiiC1KkdVEYYkuuZtj3TZ80Di8AUKuMMyXOXbD/oVWD57R+m3QPagTWOHr7Vhmoa8+LdNG18lEi94RV3Ae7pFhY4juhRoBvYAWwDFPgNzAEfQJ7QwiMuyp8N1WP5cxBknlr5T4GU7gZ9gbKnpKThB4vSx7DMrmmtll5evMW3luq4W/QzyHms9IDEaJc22qUNJIaVHlQuAF+BGJ69tWF6jsIVmdBOPP0GWNKyiyvys6BaUnciOgssIhJjUOZy7NXUK6siHgOAh/C46KIAQ/IdeAa0omv0RtXWy5EuiJ5dunCs/JelngMma6uXIbgiKT0I7C1vsRx6mNT9NdPLI7gi1p5GBERvM9h0rawl/fQdkGGMPQO8q4leHsEVETkBQNo8wE/fxLfzpNI3CiyW8Wky953IyZrplZwIbAfgsnwESQBb3TWALJ9L8j5HozZ6JSeSpalJYB7VZEU+tdLLIb+Nr7St32C94r1Wtc8oNTrz/Afdr/IKoW/lXqSbQflUUC2p+xDN9sl8r6q2XkRERERD8w8UB9m190Ui3gAAAABJRU5ErkJggg==" />
@@ -439,6 +464,8 @@ const useStyles = makeStyles({
 
 function SimpleDialog(props) {
   const classes = useStyles();
+
+  const setErrorMessage = useContext(ErrorContext);
   const {
     onClose,
     currentMaintenance,
@@ -453,16 +480,18 @@ function SimpleDialog(props) {
 
   const confirmService = async () => {
     // setLoading(true);
-
-    const response = await axios.post(
-      `http://localhost:4000/api/maintenance-history/${vin}`,
-      {
+    try {
+      await axios.post(`http://localhost:4000/api/maintenance-history/${vin}`, {
         lastServiceMilage: milage,
         maintenanceHash: currentMaintenance
-      }
-    );
-    console.log(milage);
-    onServiceConfirm();
+      });
+      onServiceConfirm();
+      setLoading(false);
+    } catch (error) {
+      setErrorMessage(
+        error && ((error.response && error.response.data) || error.message)
+      );
+    }
   };
 
   const handleClose = () => {
@@ -495,7 +524,6 @@ function SimpleDialog(props) {
           value={milage}
           onChange={onMilageChange}
           label="Current service milage"
-          pattern="[0-9]+"
         ></LabeledInput>
       </DialogContent>
       <DialogActions>
@@ -513,28 +541,49 @@ function SimpleDialog(props) {
 }
 
 function App() {
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const handleErrorClose = () => {
+    setErrorMessage('');
+  };
   return (
     <ErrorBoundary>
-      <Router>
-        <AppContainer className="App">
-          <Switch>
-            <Route exact path="/dealer">
-              <DealerSearch />
-            </Route>
-            <Route path="/dealer/:vin">
-              <Dealer />
-            </Route>
+      <ErrorContext.Provider value={setErrorMessage}>
+        <Router>
+          <AppContainer className="App">
+            <Snackbar
+              anchorOrigin={{
+                vertical: 'top',
+                horizontal: 'right'
+              }}
+              open={!!errorMessage}
+              autoHideDuration={6000}
+              onClose={handleErrorClose}
+              message={errorMessage}
+            >
+              <Alert onClose={handleErrorClose} severity="error">
+                {errorMessage}
+              </Alert>
+            </Snackbar>
+            <Switch>
+              <Route exact path="/dealer">
+                <DealerSearch />
+              </Route>
+              <Route path="/dealer/:vin">
+                <Dealer />
+              </Route>
 
-            <Route path="/users">
-              <ViewInfo />
-            </Route>
+              <Route path="/users">
+                <ViewInfo />
+              </Route>
 
-            <Route path="/">
-              <Home />
-            </Route>
-          </Switch>
-        </AppContainer>
-      </Router>
+              <Route path="/">
+                <Home />
+              </Route>
+            </Switch>
+          </AppContainer>
+        </Router>
+      </ErrorContext.Provider>
     </ErrorBoundary>
   );
 }
